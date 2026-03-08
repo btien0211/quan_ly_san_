@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ Thống Quản Lý Sân Bóng</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .main-container { width: 100%; max-width: 800px; }
+        
+        /* CSS cho Thanh menu */
+        .navbar { background-color: #007bff; border-radius: 8px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-around; }
+        .navbar a { display: block; color: white; text-align: center; padding: 15px 20px; text-decoration: none; font-weight: bold; font-size: 16px; transition: 0.3s; flex: 1; }
+        .navbar a:hover { background-color: #0056b3; }
+
+        /* CSS của trang Đặt sân */
+        .booking-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 25px; }
+        .slot { padding: 15px; text-align: center; border-radius: 8px; font-weight: bold; transition: all 0.3s ease; border: 2px solid transparent; }
+        .available { background-color: #e8f5e9; color: #2e7d32; cursor: pointer; }
+        .available:hover { background-color: #c8e6c9; transform: translateY(-3px); border-color: #4caf50; }
+        .booked { background-color: #ffebee; color: #c62828; cursor: not-allowed; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="navbar" id="navbar">
+            </div>
+
+        <div class="booking-container">
+            
+            <div style="display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 25px; background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-size: 18px; font-weight: bold; color: #2c3e50;">📅 Ngày đặt:</label>
+                    <input type="date" id="bookingDate" style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; outline: none; cursor: pointer;">
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-size: 18px; font-weight: bold; color: #2c3e50;">⚽ Loại sân:</label>
+                    <select id="fieldType" onchange="loadSlots()" style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; outline: none; cursor: pointer; min-width: 200px;">
+                        <option value="1">Sân 5A (5 người - 200k)</option>
+                        <option value="2">Sân 5B (5 người - 200k)</option>
+                        <option value="3">Sân 7A (7 người - 400k)</option>
+                        <option value="4">Sân 11A (11 người - 1 triệu)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="timeSlotGrid" class="grid-container">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. KIỂM TRA ĐĂNG NHẬP VÀ HIỂN THỊ MENU
+        function renderNavbar() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            const navbar = document.getElementById('navbar');
+            
+            if (user) {
+                navbar.innerHTML = `
+                    <a href="/">🏠 Đặt Sân</a>
+                    <a href="#">👋 Xin chào, ${user.full_name}</a>
+                    <a href="#" onclick="logout()">🚪 Đăng xuất</a>
+                    <a href="/admin">📊 Quản Lý Doanh Thu</a>
+                `;
+            } else {
+                navbar.innerHTML = `
+                    <a href="/">🏠 Đặt Sân</a>
+                    <a href="/login">🔑 Đăng Nhập</a>
+                    <a href="/register">👤 Đăng Ký</a>
+                    <a href="/admin">📊 Quản Lý Doanh Thu</a>
+                `;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.reload(); 
+        }
+
+        // 2. XỬ LÝ LẤY LỊCH SÂN VÀ ĐẶT SÂN
+        const slotGrid = document.getElementById('timeSlotGrid');
+        const bookingDateInput = document.getElementById('bookingDate');
+        
+        // Tự động set ngày hôm nay làm mặc định
+        const today = new Date().toISOString().split('T')[0];
+        bookingDateInput.value = today;
+
+        // Hàm Tải lịch trống từ Server (Đã sửa lỗi và nhận diện đúng ID sân)
+        async function loadSlots() {
+            const date = bookingDateInput.value;
+            const fieldId = document.getElementById('fieldType').value;
+
+            try {
+                const response = await fetch(`/api/slots?date=${date}&field_id=${fieldId}`);
+                const data = await response.json();
+                
+                slotGrid.innerHTML = ''; 
+                
+                if(data.slots) {
+                    data.slots.forEach(slot => {
+                        const div = document.createElement('div');
+                        div.className = `slot ${slot.isBooked ? 'booked' : 'available'}`;
+                        div.innerHTML = `
+                            <div style="font-size: 18px;">${slot.time}</div>
+                            <small>${slot.isBooked ? 'Đã có người đặt' : 'Còn trống'}</small>
+                        `;
+
+                        if (!slot.isBooked) {
+                            div.onclick = () => handleBooking(slot.id, slot.time);
+                        }
+                        slotGrid.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                console.error("Lỗi:", error);
+                slotGrid.innerHTML = '<p style="color:red;">Không thể tải dữ liệu lịch sân.</p>';
+            }
+        }
+
+        // Hàm Xử lý khi khách bấm đặt sân (Đã tách riêng và gỡ các lỗi gạch đỏ)
+        async function handleBooking(slotId, time) {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) {
+                alert("Bạn phải đăng nhập thì mới được đặt sân nhé!");
+                window.location.href = '/login'; 
+                return; 
+            }
+
+            if (confirm(`Bạn muốn đặt sân vào khung giờ ${time} chứ?`)) {
+                try {
+                    const response = await fetch('/api/book', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            field_id: document.getElementById('fieldType').value,
+                            booking_date: bookingDateInput.value,
+                            slot_id: slotId
+                        })
+                    });
+
+                    const result = await response.json();
+                    alert(result.message || result.error);
+                    loadSlots(); // Đặt xong thì tải lại lưới sân
+                } catch (error) {
+                console.error("Lỗi khi đặt sân:", error);
+                // Thêm dòng báo lỗi này vào để nó bật popup lên thay vì im lặng
+                alert("Bị lỗi rồi: Trình duyệt không nhận được phản hồi từ Server. Hãy kiểm tra màn hình đen!"); 
+            }
+            }
+        }
+
+        // 3. KHỞI CHẠY CÁC HÀM KHI MỞ TRANG
+        renderNavbar(); 
+        window.onload = loadSlots; 
+        bookingDateInput.addEventListener('change', loadSlots); 
+    </script>
+</body>
+</html>

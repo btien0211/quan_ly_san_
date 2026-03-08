@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Thống Kê Doanh Thu</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .admin-container {
+            background: white; padding: 30px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 1000px; margin: auto;
+        }
+        h2 { text-align: center; color: #2c3e50; }
+        .back-btn { 
+            display: inline-block; margin-bottom: 20px; 
+            text-decoration: none; color: white; 
+            background-color: #007bff; padding: 10px 15px; border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <a href="/" class="back-btn">⬅ Quay lại Trang Đặt Sân</a>
+        <h2>Báo Cáo Doanh Thu Hệ Thống</h2>
+
+        <div style="display: flex; gap: 30px; margin-top: 20px;">
+            <div style="flex: 1; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px #ccc;">
+                <h4 style="text-align: center;">Doanh thu theo Tuần</h4>
+                <canvas id="weeklyChart"></canvas>
+            </div>
+            <div style="flex: 1; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px #ccc;">
+                <h4 style="text-align: center;">Doanh thu theo Tháng</h4>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadCharts() {
+            try {
+                // Gọi API lấy dữ liệu
+                const resW = await fetch('/api/revenue/weekly');
+                const dataW = await resW.json();
+                
+                const resM = await fetch('/api/revenue/monthly');
+                const dataM = await resM.json();
+
+                // Vẽ Biểu đồ Tuần (Cột)
+                new Chart(document.getElementById('weeklyChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: dataW.map(d => d.label),
+                        datasets: [{ 
+                            label: 'Doanh thu (VNĐ)', 
+                            data: dataW.map(d => d.total), 
+                            backgroundColor: '#3498db' 
+                        }]
+                    }
+                });
+
+                // Vẽ Biểu đồ Tháng (Đường)
+                new Chart(document.getElementById('monthlyChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dataM.map(d => d.label),
+                        datasets: [{ 
+                            label: 'Doanh thu (VNĐ)', 
+                            data: dataM.map(d => d.total), 
+                            borderColor: '#e74c3c', 
+                            tension: 0.3 
+                        }]
+                    }
+                });
+            } catch (error) {
+                console.error("Lỗi tải biểu đồ:", error);
+            }
+        }
+
+        window.onload = loadCharts;
+    </script>
+
+</body>
+</html>

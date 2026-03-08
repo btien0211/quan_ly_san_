@@ -1,0 +1,71 @@
+/* Giao diện tổng thể */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7f6;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.booking-container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 800px;
+}
+
+h2 { color: #2c3e50; text-align: center; }
+
+/* Ô chọn ngày */
+#bookingDate {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-left: 10px;
+}
+
+/* Lưới khung giờ */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.slot {
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+/* Trạng thái: Trống (Màu xanh) */
+.available {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    cursor: pointer;
+}
+.available:hover {
+    background-color: #c8e6c9;
+    transform: translateY(-3px);
+    border-color: #4caf50;
+}
+
+/* Trạng thái: Đã đặt (Màu đỏ) */
+.booked {
+    background-color: #ffebee;
+    color: #c62828;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Trạng thái: Đang chọn */
+.selected {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+    color: #1565c0;
+}
