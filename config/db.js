@@ -1,15 +1,15 @@
 const mysql = require('mysql2');
 
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',      // Tên user MySQL của Nhi (mặc định là root)
-    password: '',      // Mật khẩu MySQL của Nhi (để trống nếu không có)
-    database: 'quan ly san banh'
+    host: 'bilgjypkrmepeymz8fud-mysql.services.clever-cloud.com',
+    user: 'u9bf0kz7eyyplsns',
+    password: '1YC058CFKG7OV0obl9NK',
+    database: 'bilgjypkrmepeymz8fud'
 });
 
 db.connect((err) => {
     if (err) throw err;
-    console.log('✅ Đã kết nối MySQL thành công!');
+    console.log('Đã kết nối MySQL thành công!');
 });
 
 module.exports = db;
